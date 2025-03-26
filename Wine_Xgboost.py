@@ -1,3 +1,4 @@
+pip install xgboost optuna torch scikit-learn pandas seaborn
 # ✅ Import necessary libraries
 import optuna  # For hyperparameter tuning
 import xgboost as xgb  # XGBoost model
