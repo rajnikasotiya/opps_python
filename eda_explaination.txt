@@ -1,0 +1,1021 @@
+Problem statement:-to predict insurance premiums based on various factors such as customer demographics, policy details, and other variables.
+
+data description:
+Age: Age of the insured individual (Numerical)
+Gender: Gender of the insured individual (Categorical: Male, Female)
+Annual Income: Annual income of the insured individual (Numerical, skewed)
+Marital Status: Marital status of the insured individual (Categorical: Single, Married, Divorced)
+Number of Dependents: Number of dependents (Numerical, with missing values)
+Education Level: Highest education level attained (Categorical: High School, Bachelor's, Master's, PhD)
+Occupation: Occupation of the insured individual (Categorical: Employed, Self-Employed, Unemployed)
+Health Score: A score representing the health status (Numerical, skewed)
+Location: Type of location (Categorical: Urban, Suburban, Rural)
+Policy Type: Type of insurance policy (Categorical: Basic, Comprehensive, Premium)
+Previous Claims: Number of previous claims made (Numerical, with outliers)
+Vehicle Age: Age of the vehicle insured (Numerical)
+Credit Score: Credit score of the insured individual (Numerical, with missing values)
+Insurance Duration: Duration of the insurance policy (Numerical, in years)
+Premium Amount: Target variable representing the insurance premium amount (Numerical, skewed)
+Policy Start Date: Start date of the insurance policy (Text, improperly formatted)
+Customer Feedback: Short feedback comments from customers (Text)
+Smoking Status: Smoking status of the insured individual (Categorical: Yes, No)
+Exercise Frequency: Frequency of exercise (Categorical: Daily, Weekly, Monthly, Rarely)
+Property Type: Type of property owned (Categorical: House, Apartment, Condo)
+Quick overview of EDA results:
+As our data is synthetic, all the missing values comes under MCAR.
+5% of population's annual income is lower than premium amount paid
+Insurance duration feature has inconsistency
+Annual income and premium amount feature are right skewed
+In Categorical features, all the categories are evenly distributed
+Let's explore these results step by step with Exploratory Data Analysis
+
+Key Insights from EDA:
+Missing Values:
+Features like Credit Score and Number of Dependents have missing values, all categorized as MCAR.
+Skewness in Numerical Features:
+Annual Income and Premium Amount are right-skewed, indicating a few high-value outliers.
+Previous Claims shows the presence of outliers.
+Inconsistencies:
+Insurance Duration contains inconsistencies, which may need cleaning or transformation.
+Balanced Categorical Features:
+All categorical features are evenly distributed, making the dataset well-balanced.
+
+
+
+
+Quick overview of EDA results:
+As our data is synthetic, all the missing values comes under MCAR.
+5% of population's annual income is lower than premium amount paid
+Insurance duration feature has inconsistency
+Annual income and premium amount feature are right skewed
+In Categorical features, all the categories are evenly distributed
+### ✅ **Quick Overview of EDA Results:**
+
+1. **MCAR Missing Values:**  
+   - Since the data is synthetic, all missing values fall under **MCAR** (Missing Completely At Random).
+
+2. **Income vs. Premium Anomaly:**  
+   - **5%** of the population has **annual income lower** than the premium amount paid, indicating potential anomalies.
+
+3. **Feature Inconsistencies:**  
+   - The **Insurance Duration** feature shows **inconsistencies**, requiring cleaning.
+
+4. **Skewness:**  
+   - Both **Annual Income** and **Premium Amount** are **right-skewed**, suggesting the presence of high-value outliers.
+
+5. **Balanced Categorical Features:**  
+   - All **categorical features** are evenly distributed, indicating no major class imbalance issues. 🚀
+
+
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+explain why all these are necessary in Eda why we are using it
+### ✅ **Why We Use These Libraries in EDA**
+
+1. **`pandas` (Data Manipulation):**
+   - Used for loading, manipulating, and analyzing structured data (CSV, Excel, etc.).  
+   - Functions like `.head()`, `.describe()`, and `.info()` help inspect and clean data.  
+   - Essential for handling missing values, merging datasets, and feature engineering.
+
+2. **`numpy` (Numerical Operations):**
+   - Provides support for **array and matrix operations**.  
+   - Useful for numerical transformations, statistical calculations, and handling missing values.
+
+3. **`matplotlib.pyplot` (Data Visualization):**
+   - Used for creating **static visualizations** like line plots, histograms, and scatter plots.  
+   - Helps identify patterns, outliers, and relationships between variables.
+
+✅ These libraries are the **core building blocks** for effective EDA. 🚀
+
+
+
+#additional config
+pd.set_option('display.max_columns',None) explain why all these are necessary in Eda why we are using it
+### ✅ **Why Use `pd.set_option('display.max_columns', None)` in EDA?**
+
+1. **Purpose:**  
+   - This command configures `pandas` to display **all columns** in the dataset, regardless of how many there are.  
+   - By default, `pandas` truncates the display when the number of columns is large, showing only a subset.
+
+2. **Why It Matters in EDA:**  
+   - It ensures you **see all features** at once, which is crucial for analyzing the dataset.  
+   - Helps in identifying patterns, missing values, and inconsistencies more effectively.  
+
+✅ This setting makes data exploration more **transparent and thorough**. 🚀
+
+
+data = pd.read_csv('/kaggle/input/playground-series-s4e12/train.csv')
+data.head()
+
+### ✅ **Explanation of the Code:**
+
+1. **`data = pd.read_csv('/kaggle/input/playground-series-s4e12/train.csv')`**
+   - This line loads the **training dataset** into a `pandas` DataFrame.  
+   - The file path points to the Kaggle competition directory.  
+   - `pd.read_csv()` is used to read CSV files into structured tabular format.
+
+2. **`data.head()`**
+   - Displays the **first five rows** of the dataset.  
+   - Helps in quickly inspecting the structure, column names, and data types.
+
+✅ This is a **standard step** in EDA to **load and preview the data** before further analysis. 🚀
+
+
+
+
+features = data.columns
+numerical_features = data.select_dtypes(exclude='object').columns
+categorical_features = data.select_dtypes(include='object').columns
+print(f'numerical features: {len(numerical_features)} \ncategorical features: {len(categorical_features)}')
+
+### ✅ **Explanation of the Code:**
+
+1. **`features = data.columns`**  
+   - Extracts all **column names** from the DataFrame into the `features` variable.
+
+2. **`numerical_features = data.select_dtypes(exclude='object').columns`**  
+   - Selects all **numerical features** by excluding `object` data types.  
+   - Assigns them to the `numerical_features` variable.
+
+3. **`categorical_features = data.select_dtypes(include='object').columns`**  
+   - Selects all **categorical features** by including `object` data types.  
+   - Assigns them to the `categorical_features` variable.
+
+4. **`print()`**  
+   - Displays the **count of numerical and categorical features**.
+
+✅ This helps in quickly identifying the **data types** in the dataset, which is essential for **EDA and feature engineering**. 🚀
+### ✅ **Why Are These Steps Necessary in EDA?**
+
+1. **`features = data.columns`:**  
+   - Retrieves all column names, helping you **identify available features** for analysis.  
+   - Essential for understanding the **structure of the dataset**.
+
+2. **`numerical_features = data.select_dtypes(exclude='object').columns`:**  
+   - Isolates **numerical features** for statistical analysis (e.g., mean, std, distribution).  
+   - Critical for detecting **outliers, skewness, and applying scaling**.
+
+3. **`categorical_features = data.select_dtypes(include='object').columns`:**  
+   - Selects **categorical features** for frequency analysis and encoding.  
+   - Important for identifying **class imbalances** and preparing for encoding.
+
+4. **`print()` statement:**  
+   - Displays the **count of numerical and categorical features**, giving a quick overview of the dataset composition.
+
+✅ These steps **categorize the features** based on their data types, which is crucial for **data cleaning, transformation, and feature engineering** in EDA. 🚀
+
+
+
+data.isnull().sum() , explain why all these are necessary in Eda why we are using it
+### ✅ **Why Use `data.isnull().sum()` in EDA?**
+
+1. **Purpose:**  
+   - This command **identifies missing values** in each column of the dataset.  
+   - The `.isnull()` function returns `True` for missing values and `False` for non-missing ones.  
+   - The `.sum()` function counts the number of `True` values, giving the total missing values per column.
+
+2. **Why It Matters in EDA:**  
+   - Detects **missing data patterns** (MCAR, MAR, or MNAR).  
+   - Helps decide whether to **impute, drop, or flag** missing values.  
+   - Essential for **data cleaning and preprocessing**. 🚀
+
+
+
+
+
+   data['id'].nunique()
+### ✅ **Why Use `data['id'].nunique()` in EDA?**
+
+1. **Purpose:**  
+   - The `.nunique()` function returns the **number of unique values** in the `id` column.  
+   - Helps confirm whether the `id` column contains **unique identifiers** for each record.  
+
+2. **Why It Matters in EDA:**  
+   - Ensures there are **no duplicate IDs**, verifying data integrity.  
+   - Helps identify **duplicate or inconsistent records**, which may need to be removed.  
+   - Essential for **data validation** and checking the uniqueness of ID columns. 🚀
+
+
+
+******Assumption 1: as our id is unique, we assume that no two claims are overlap by an individual (i.e), we have 12 lakh indivial people who are insured in this data.
+
+na_features = []
+for col in features:
+    if data[col].isnull().any():
+        na_features.append(col)
+        print(f'{col:<22} has {np.round(data[col].isnull().mean() * 100,2)} % of NA')
+print(f'\nNo of NA features: {len(na_features)}')
+print(na_features)
+explain why all these are necessary in Eda why we are using it
+### ✅ **Why Use This Code in EDA?**
+
+1. **`na_features = []`**  
+   - Creates an empty list to **store the names of columns** containing missing values.
+
+2. **`for col in features:`**  
+   - Iterates through all features (columns) in the dataset.
+
+3. **`if data[col].isnull().any():`**  
+   - Checks whether the current column contains **any missing values**.  
+   - If `True`, the column is appended to the `na_features` list.
+
+4. **`np.round(data[col].isnull().mean() * 100, 2)`**  
+   - Calculates the **percentage of missing values** for each column.  
+   - Rounds the percentage to **two decimal places** for better readability.
+
+5. **`print()` statements:**  
+   - Displays the **columns with missing values** and their corresponding percentage.  
+   - Shows the **total number of columns** with missing values.
+
+---
+
+### ✅ **Why It Is Important in EDA:**  
+- Helps **identify missing value patterns**.  
+- Necessary for deciding whether to **impute or drop** missing data.  
+- Improves **data quality and consistency** before model training. 🚀
+
+
+data['Age'].nunique()
+### ✅ **Explanation of `data['Age'].nunique()`**
+
+- **Purpose:**  
+  - This code returns the **number of unique values** in the `Age` column.
+  
+- **Why It Matters in EDA:**  
+  - Helps determine how **distinct** the values are in the `Age` feature.  
+  - **Important for identifying duplicates or inconsistencies** in data, especially for a continuous feature like age.  
+  - Useful in understanding if the age feature contains redundant or erroneous entries, which may require further cleaning or transformation.
+
+
+
+
+data['Age'].value_counts().sort_index().plot(kind='bar',figsize=(12,3))
+### ✅ **Explanation of `data['Age'].value_counts().sort_index().plot(kind='bar', figsize=(12, 3))`**
+
+1. **`data['Age'].value_counts()`**  
+   - Calculates the **frequency of each unique value** in the `Age` column.  
+   - Helps identify the **distribution of ages** in the dataset.
+
+2. **`sort_index()`**  
+   - Sorts the values by **index (age)** in ascending order, ensuring a **proper visual display** on the bar chart.
+
+3. **`plot(kind='bar', figsize=(12, 3))`**  
+   - Creates a **bar plot** to visualize the frequency distribution of `Age`.  
+   - `figsize=(12, 3)` adjusts the plot size for better readability.
+
+---
+
+### ✅ **Why It Is Important in EDA:**
+- Provides a **clear view of the distribution** of ages in the dataset.  
+- Helps in detecting **outliers**, **clustering**, or **gaps** in age data.  
+- Essential for understanding the **spread and central tendency** of the feature, aiding further preprocessing decisions. 🚀
+
+
+data[data['Age'].isna()]['Gender'].value_counts()
+
+### ✅ **Explanation of `data[data['Age'].isna()]['Gender'].value_counts()`**
+
+1. **`data[data['Age'].isna()]`**  
+   - Filters the data to **only include rows where `Age` is missing**.
+
+2. **`['Gender']`**  
+   - Selects the **`Gender` column** from the filtered data.
+
+3. **`value_counts()`**  
+   - Counts the number of occurrences of each unique value (e.g., Male, Female) in the `Gender` column for rows with missing `Age`.
+
+---
+
+### ✅ **Why It Is Necessary in EDA:**
+- **Identifies patterns** in missing values, helping to understand if there is a relationship between **missing `Age`** and **Gender**.  
+- It can reveal if certain categories have a higher tendency for missing data, guiding imputation strategies.  
+- Important for **data quality** and understanding potential biases in the dataset. 🚀
+
+
+
+
+data['Education Level'].value_counts().plot.bar(), explain why all these are necessary in Eda why we are using it
+
+### ✅ **Explanation of `data['Education Level'].value_counts().plot.bar()`**
+
+1. **`data['Education Level'].value_counts()`**  
+   - Calculates the frequency of each unique value in the `Education Level` column.
+
+2. **`plot.bar()`**  
+   - Creates a **bar plot** to visualize the frequency distribution of `Education Level` categories.
+
+---
+
+### ✅ **Why It Is Necessary in EDA:**
+
+- Visualizes the **distribution of educational levels** in the dataset.  
+- Helps identify **imbalances or trends** in educational categories.  
+- Essential for understanding how **education level** is distributed and its potential influence on other features or the target variable. 🚀
+
+
+
+
+
+
+#checking whether educational level has any relation
+data[data['Occupation'].isna()]['Education Level'].value_counts().plot(kind='pie',autopct='%1.1f%%')
+
+### ✅ **Explanation of `data[data['Occupation'].isna()]['Education Level'].value_counts().plot(kind='pie', autopct='%1.1f%%')`**
+
+1. **`data[data['Occupation'].isna()]`**  
+   - Filters the data to include only rows where **`Occupation` is missing**.
+
+2. **`['Education Level']`**  
+   - Selects the **`Education Level`** column from the filtered rows.
+
+3. **`value_counts()`**  
+   - Counts the frequency of each unique value in the `Education Level` for rows with missing `Occupation`.
+
+4. **`plot(kind='pie', autopct='%1.1f%%')`**  
+   - Creates a **pie chart** to visually display the proportions of each education level in the rows where `Occupation` is missing.  
+   - `autopct='%1.1f%%'` adds percentage labels to the pie chart slices.
+
+---
+
+### ✅ **Why It Is Necessary in EDA:**
+
+- Helps explore if there's any **relationship between missing `Occupation` and `Education Level`**.  
+- Can identify if certain **education levels are more prone to missing occupation data**, which could inform how you handle missing values or impute them.
+- **Visualizing data** helps in spotting trends or patterns that may not be immediately apparent from raw numbers. 🚀
+
+
+data['Occupation'].value_counts(),explain why all these are necessary in Eda why we are using it
+### ✅ **Explanation of `data['Occupation'].value_counts()`**
+
+1. **`data['Occupation'].value_counts()`**  
+   - This function calculates the **frequency of each unique value** in the `Occupation` column, showing how many people belong to each occupation category.
+
+---
+
+### ✅ **Why It Is Necessary in EDA:**
+
+- Helps understand the **distribution** of different occupations in the dataset.
+- Allows you to spot **imbalances** in the data, where certain occupations might dominate.
+- Important for identifying **biases** or patterns, especially if occupation correlates with other variables or the target.
+- Helps in determining whether **feature engineering** or **encoding strategies** are needed for this column. 🚀
+
+
+
+
+
+
+
+data[data['Annual Income'].isna()]['Occupation'].value_counts().plot(kind='pie',autopct="%1.1f%%")
+
+### ✅ **Explanation of `data[data['Annual Income'].isna()]['Occupation'].value_counts().plot(kind='pie', autopct="%1.1f%%")`**
+
+1. **`data[data['Annual Income'].isna()]`**  
+   - Filters the dataset to include only rows where **`Annual Income` is missing**.
+
+2. **`['Occupation']`**  
+   - Selects the `Occupation` column from the filtered rows.
+
+3. **`value_counts()`**  
+   - Calculates the **frequency of each unique occupation** where `Annual Income` is missing.
+
+4. **`plot(kind='pie', autopct="%1.1f%%")`**  
+   - Creates a **pie chart** to visualize the distribution of occupations with missing `Annual Income`.  
+   - `autopct="%1.1f%%"` displays the **percentage values** on the chart.
+
+---
+
+### ✅ **Why It Is Necessary in EDA:**
+
+- Helps explore if there is a **relationship between missing `Annual Income` and `Occupation`**.  
+- Allows you to identify whether certain **occupations have a higher tendency for missing income values**.  
+- Visual representation makes it easier to spot patterns, guiding **imputation or cleaning strategies**. 🚀
+
+
+
+
+
+data[data['Annual Income'].isna()]['Education Level'].value_counts().plot(kind='pie',autopct="%1.1f%%")
+
+### ✅ **Explanation of `data[data['Annual Income'].isna()]['Education Level'].value_counts().plot(kind='pie', autopct="%1.1f%%")`**
+
+1. **`data[data['Annual Income'].isna()]`**  
+   - Filters the dataset to **only include rows with missing `Annual Income`**.
+
+2. **`['Education Level']`**  
+   - Selects the **`Education Level`** column from the filtered rows.
+
+3. **`value_counts()`**  
+   - Calculates the **frequency of each education level** where `Annual Income` is missing.
+
+4. **`plot(kind='pie', autopct="%1.1f%%")`**  
+   - Creates a **pie chart** showing the distribution of education levels with missing `Annual Income`.  
+   - `autopct="%1.1f%%"` displays the **percentage values** on the pie chart.
+
+---
+
+### ✅ **Why It Is Necessary in EDA:**
+
+- Helps determine if there is a **correlation between missing income and education level**.  
+- Identifies whether individuals with **specific education levels** are more likely to have missing income data.  
+- Provides a **visual summary** of the distribution, making it easier to spot patterns for **imputation or data cleaning**. 🚀
+
+
+
+
+
+data['Marital Status'].value_counts().plot(kind='pie',autopct='%1.1f%%')
+
+### ✅ **Explanation of `data['Marital Status'].value_counts().plot(kind='pie', autopct='%1.1f%%')`**
+
+1. **`data['Marital Status'].value_counts()`**  
+   - Calculates the **frequency of each unique value** in the `Marital Status` column.
+
+2. **`plot(kind='pie', autopct='%1.1f%%')`**  
+   - Creates a **pie chart** to visualize the distribution of marital statuses.  
+   - `autopct='%1.1f%%'` displays the **percentage values** on the pie chart with **one decimal place**.
+
+---
+
+### ✅ **Why It Is Necessary in EDA:**
+
+- Provides a **visual representation** of the marital status distribution.  
+- Helps identify if the dataset is **imbalanced** toward a particular marital status group.  
+- Useful for analyzing whether **marital status impacts the target variable** (e.g., insurance premiums).  
+- Enhances **data interpretation** and pattern detection during EDA. 🚀
+
+
+
+
+
+
+data[data['Marital Status'].isna()]['Number of Dependents'].value_counts().plot(kind='pie',autopct='%1.1f%%')
+
+### ✅ **Explanation of `data[data['Marital Status'].isna()]['Number of Dependents'].value_counts().plot(kind='pie', autopct='%1.1f%%')`**
+
+1. **`data[data['Marital Status'].isna()]`**  
+   - Filters the dataset to include only rows where **`Marital Status` is missing**.
+
+2. **`['Number of Dependents']`**  
+   - Selects the `Number of Dependents` column from the filtered rows.
+
+3. **`value_counts()`**  
+   - Calculates the **frequency** of each unique value in the `Number of Dependents` column for missing marital status records.
+
+4. **`plot(kind='pie', autopct='%1.1f%%')`**  
+   - Creates a **pie chart** visualizing the distribution of dependents for missing `Marital Status`.  
+   - `autopct='%1.1f%%'` displays the **percentage values** on the pie chart with **one decimal place**.
+
+---
+
+### ✅ **Why It Is Necessary in EDA:**
+
+- Helps determine if there is a **relationship between missing marital status and the number of dependents**.  
+- Identifies whether specific dependent categories are **more prone to missing marital status**.  
+- Provides a **visual summary** for better pattern detection during EDA. 🚀
+
+
+
+
+data.groupby('Number of Dependents')['Marital Status'].value_counts().plot.bar(figsize=(6,3))
+
+### ✅ **Explanation of `data.groupby('Number of Dependents')['Marital Status'].value_counts().plot.bar(figsize=(6, 3))`**
+
+1. **`data.groupby('Number of Dependents')`**  
+   - Groups the dataset by the **`Number of Dependents`** feature.  
+   - Aggregates the data based on the number of dependents.
+
+2. **`['Marital Status'].value_counts()`**  
+   - Counts the occurrences of each **marital status** within each dependent group.
+
+3. **`plot.bar(figsize=(6, 3))`**  
+   - Creates a **bar plot** visualizing the distribution of marital status across different dependent groups.  
+   - `figsize=(6, 3)` adjusts the plot size for better readability.
+
+---
+
+### ✅ **Why It Is Necessary in EDA:**
+
+- Helps examine the **relationship between marital status and the number of dependents**.  
+- Identifies patterns or inconsistencies, such as **which marital statuses** are associated with having more or fewer dependents.  
+- Provides a **visual representation** that makes it easier to spot trends or imbalances. 🚀
+
+
+
+
+
+data['Smoking Status'].value_counts()
+
+### ✅ **Explanation of `data['Smoking Status'].value_counts()`**
+
+1. **`data['Smoking Status']`**  
+   - Selects the `Smoking Status` column from the dataset.
+
+2. **`value_counts()`**  
+   - Counts the **frequency of each unique value** in the `Smoking Status` column.  
+   - Displays how many records correspond to **`Yes`** (Smoker) and **`No`** (Non-Smoker).
+
+---
+
+### ✅ **Why It Is Necessary in EDA:**
+
+- Helps analyze the **distribution of smokers and non-smokers** in the dataset.  
+- Important for detecting **imbalances** that may influence model performance.  
+- Useful for identifying **potential correlations** between smoking status and the target variable (e.g., insurance premiums). 🚀
+
+
+
+
+
+data.groupby('Smoking Status')['Health Score'].median().plot.bar(figsize=(6,3))
+
+### ✅ **Explanation of `data.groupby('Smoking Status')['Health Score'].median().plot.bar(figsize=(6,3))`**
+
+1. **`data.groupby('Smoking Status')`**  
+   - Groups the dataset by the **`Smoking Status`** feature.
+
+2. **`['Health Score']`**  
+   - Selects the `Health Score` column for analysis.
+
+3. **`median()`**  
+   - Calculates the **median health score** for each smoking status group (`Yes` and `No`).
+
+4. **`plot.bar(figsize=(6, 3))`**  
+   - Creates a **bar plot** visualizing the median health score for smokers and non-smokers.  
+   - `figsize=(6, 3)` adjusts the chart size for better readability.
+
+---
+
+### ✅ **Why It Is Necessary in EDA:**
+
+- Helps **compare the median health score** between smokers and non-smokers.  
+- Reveals potential **health differences** between the two groups.  
+- Useful for identifying **health-related risk factors** that might impact insurance premiums. 🚀
+
+
+
+
+
+#Analysing health score by excercise habit
+data['Exercise Frequency'].value_counts()
+data[data['Health Score'].isna()]['Exercise Frequency'].value_counts()
+
+### ✅ **Explanation of the Code:**
+
+1. **`data['Exercise Frequency'].value_counts()`**  
+   - Counts the **frequency of each exercise category** (e.g., Daily, Weekly, Monthly, Rarely) in the entire dataset.  
+   - Helps understand how exercise habits are distributed among the insured individuals.
+
+2. **`data[data['Health Score'].isna()]['Exercise Frequency'].value_counts()`**  
+   - Filters the data to include only rows where **`Health Score` is missing**.  
+   - Counts the **frequency of exercise categories** for individuals with missing health scores.  
+
+---
+
+### ✅ **Why It Is Necessary in EDA:**
+
+- Helps analyze whether **exercise frequency impacts missing health scores**, revealing potential patterns.  
+- Can identify if individuals with certain **exercise habits are more likely to have missing health scores**.  
+- Provides insights into **data consistency and potential biases**. 🚀
+
+
+
+
+
+data.groupby('Exercise Frequency')['Health Score'].mean()
+
+### ✅ **Explanation of `data.groupby('Exercise Frequency')['Health Score'].mean()`**
+
+1. **`data.groupby('Exercise Frequency')`**  
+   - Groups the dataset by the **`Exercise Frequency`** feature.  
+   - Aggregates all records based on the different exercise categories (e.g., Daily, Weekly, Monthly, Rarely).
+
+2. **`['Health Score']`**  
+   - Selects the `Health Score` column for analysis.
+
+3. **`mean()`**  
+   - Calculates the **average health score** for each exercise frequency group.
+
+---
+
+### ✅ **Why It Is Necessary in EDA:**
+
+- Helps identify the **relationship between exercise frequency and health scores**.  
+- Reveals whether individuals with **higher exercise frequency** tend to have better health scores.  
+- Provides insights into **health-related patterns**, which can influence the prediction of insurance premiums. 🚀
+
+
+
+
+
+data.groupby('Exercise Frequency')['Health Score'].mean()
+
+### ✅ **Explanation of `data.groupby('Exercise Frequency')['Health Score'].mean()`**
+
+1. **`data.groupby('Exercise Frequency')`**  
+   - Groups the dataset by the **`Exercise Frequency`** feature.  
+   - Aggregates all records based on the different exercise categories (e.g., Daily, Weekly, Monthly, Rarely).
+
+2. **`['Health Score']`**  
+   - Selects the `Health Score` column for analysis.
+
+3. **`mean()`**  
+   - Calculates the **average health score** for each exercise frequency group.
+
+---
+
+### ✅ **Why It Is Necessary in EDA:**
+
+- Helps identify the **relationship between exercise frequency and health scores**.  
+- Reveals whether individuals with **higher exercise frequency** tend to have better health scores.  
+- Provides insights into **health-related patterns**, which can influence the prediction of insurance premiums. 🚀
+
+
+
+
+#checking insurance duration for similar policy start data
+data[data['Policy Start Date'].str.contains('2022-04-06')].head()
+
+### ✅ **Explanation of `data[data['Policy Start Date'].str.contains('2022-04-06')].head()`**
+
+1. **`data['Policy Start Date'].str.contains('2022-04-06')`**  
+   - This condition filters the dataset to **include only rows where the `Policy Start Date` contains the specific date `2022-04-06`**.  
+   - The `.str.contains()` function is used to match the date string pattern.
+
+2. **`data[data['Policy Start Date'].str.contains('2022-04-06')]`**  
+   - Filters the data based on the condition above.
+
+3. **`.head()`**  
+   - Displays the **first 5 rows** of the filtered data for inspection.
+
+---
+
+### ✅ **Why It Is Necessary in EDA:**
+
+- Useful for **checking specific subsets** of data with the same policy start date.  
+- Helps identify if there are any **patterns or inconsistencies** in features (e.g., insurance duration) for policies starting on that particular date.  
+- Aids in validating the **data quality** and ensuring consistency. 🚀
+
+
+
+
+
+
+for col in numerical_features:
+    data[col].plot(kind='hist',bins=20,figsize=(6,3),edgecolor='black')
+    plt.title(col)
+    plt.show()
+
+### ✅ **Explanation of the Code:**
+
+1. **`for col in numerical_features:`**  
+   - Loops through each column in the list of numerical features in the dataset.
+
+2. **`data[col].plot(kind='hist', bins=20, figsize=(6, 3), edgecolor='black')`**  
+   - Plots a **histogram** for each numerical column with 20 bins.  
+   - `figsize=(6, 3)` sets the plot size, and `edgecolor='black'` adds black borders to the bars.
+
+3. **`plt.title(col)`**  
+   - Sets the title of the histogram to the column name.
+
+4. **`plt.show()`**  
+   - Displays the plot.
+
+---
+
+### ✅ **Why It Is Necessary in EDA:**
+
+- Visualizes the **distribution of numerical features**.  
+- Helps detect **skewness, outliers, and the spread of data**.  
+- Provides insights into the **shape of data**, aiding feature engineering and transformation decisions. 🚀
+
+
+
+
+
+
+for col in categorical_features:
+    if col != 'Policy Start Date':
+        data[col].value_counts().plot(kind='bar',figsize=(6,3))
+        plt.title(col)
+        plt.show()
+
+
+### ✅ **Explanation of the Code:**
+
+1. **`for col in categorical_features:`**  
+   - Loops through each categorical feature in the dataset.
+
+2. **`if col != 'Policy Start Date':`**  
+   - Skips the `Policy Start Date` column since it's not categorical data in this context.
+
+3. **`data[col].value_counts().plot(kind='bar', figsize=(6, 3))`**  
+   - Plots a **bar chart** for the frequency of each category in the current column.  
+   - `figsize=(6, 3)` sets the plot size.
+
+4. **`plt.title(col)`**  
+   - Sets the plot title as the current column name.
+
+5. **`plt.show()`**  
+   - Displays the plot.
+
+---
+
+### ✅ **Why It Is Necessary in EDA:**
+
+- Helps visualize the **distribution of categorical features**.  
+- Allows easy identification of **imbalanced categories**, which could affect model performance.  
+- Useful for analyzing **categorical data patterns**, assisting in preprocessing or feature engineering. 🚀
+
+
+
+
+
+
+
+import seaborn as sns
+import warnings
+warnings.filterwarnings("ignore")
+
+### ✅ **Explanation of `import seaborn as sns` and `import warnings`**
+
+1. **`import seaborn as sns`**  
+   - Imports the **Seaborn library**, which is used for making **statistical plots** like bar charts, histograms, and more, built on top of Matplotlib.
+
+2. **`import warnings`**  
+   - Imports the **warnings library** to manage and suppress warnings in the code.
+
+3. **`warnings.filterwarnings("ignore")`**  
+   - Suppresses warnings during code execution to **keep the output clean**.
+
+---
+
+### ✅ **Why It Is Necessary in EDA:**
+
+- Seaborn helps create **beautiful, easy-to-interpret visualizations**.  
+- Suppressing warnings prevents **irrelevant messages** from cluttering the output. 🚀
+
+
+
+
+
+
+for col in numerical_features:
+    if data[col].skew() > 0.5 or data[col].skew() < -0.5:
+        print(f'{col} {np.round(data[col].skew(),2)}')
+
+
+### ✅ **Explanation of the Code:**
+
+1. **`for col in numerical_features:`**  
+   - Loops through each numerical feature in the dataset.
+
+2. **`if data[col].skew() > 0.5 or data[col].skew() < -0.5:`**  
+   - Checks if the **skewness** of the column is greater than 0.5 or less than -0.5, which indicates significant skewness (either right or left).
+
+3. **`print(f'{col} {np.round(data[col].skew(), 2)}')`**  
+   - Prints the column name and its skewness value (rounded to 2 decimal places) if the skewness condition is met.
+
+---
+
+### ✅ **Why It Is Necessary in EDA:**
+
+- **Skewness** analysis helps detect **non-normality** in numerical features, guiding necessary transformations (e.g., log transformation) before modeling.  
+- Helps in making decisions about **feature engineering** for more robust models. 🚀
+
+
+
+
+
+
+
+sns.distplot(data['Annual Income'])
+
+### ✅ **Explanation of `sns.distplot(data['Annual Income'])`**
+
+1. **`sns.distplot()`**  
+   - A **Seaborn** function used to plot **distributions** of a dataset. It combines a **histogram** and **kernel density estimate** (KDE) to show the frequency and smooth probability distribution of the data.
+
+2. **`data['Annual Income']`**  
+   - Specifies the column (`Annual Income`) for which the distribution plot is to be created.
+
+---
+
+### ✅ **Why It Is Necessary in EDA:**
+
+- Helps visualize the **distribution** of annual income and identify if it's **skewed** or normally distributed.  
+- Allows for further transformation if needed (e.g., log transformation for skewed data).  
+- Useful for detecting **outliers** and understanding the overall spread of the data. 🚀
+
+
+
+
+
+
+sns.boxplot(data['Annual Income'])
+
+### ✅ **Explanation of `sns.boxplot(data['Annual Income'])`**
+
+1. **`sns.boxplot()`**  
+   - A Seaborn function that creates a **boxplot** to visualize the **distribution** of numerical data, showing the median, quartiles, and potential outliers.
+
+2. **`data['Annual Income']`**  
+   - Specifies the `Annual Income` column as the data for the boxplot.
+
+---
+
+### ✅ **Why It Is Necessary in EDA:**
+
+- Helps identify **outliers** in the `Annual Income` feature.  
+- Provides insights into the **spread** of income values, including the median, interquartile range, and any extreme values.  
+- Crucial for understanding the **variability** in income distribution. 🚀
+
+
+
+
+IQR = data['Annual Income'].quantile(0.75) - data['Annual Income'].quantile(0.25)
+lower_bound = (data['Annual Income'].quantile(0.25)) - (IQR * 1.5)
+upper_bound = (data['Annual Income'].quantile(0.75)) + (IQR * 1.5)
+print(lower_bound,upper_bound)
+
+### ✅ **Explanation of the Code:**
+
+1. **`IQR = data['Annual Income'].quantile(0.75) - data['Annual Income'].quantile(0.25)`**  
+   - Calculates the **Interquartile Range (IQR)** by subtracting the 25th percentile (Q1) from the 75th percentile (Q3) of `Annual Income`.
+
+2. **`lower_bound = (data['Annual Income'].quantile(0.25)) - (IQR * 1.5)`**  
+   - Defines the **lower bound** for outliers using the formula: `Q1 - 1.5 * IQR`.
+
+3. **`upper_bound = (data['Annual Income'].quantile(0.75)) + (IQR * 1.5)`**  
+   - Defines the **upper bound** for outliers using the formula: `Q3 + 1.5 * IQR`.
+
+4. **`print(lower_bound, upper_bound)`**  
+   - Displays the **calculated bounds** for identifying outliers.
+
+---
+
+### ✅ **Why It Is Necessary in EDA:**
+
+- Helps **identify outliers** in the `Annual Income` feature, which could distort statistical analyses and model performance.  
+- Outlier detection is essential for understanding the **range of valid data** and ensuring data integrity. 🚀
+
+
+
+data[data['Annual Income'] > 99583].shape
+
+### ✅ **Explanation of the Code:**
+
+**`data[data['Annual Income'] > 99583].shape`**
+
+- **`data[data['Annual Income'] > 99583]`**: Filters the dataset to include only the rows where `Annual Income` is greater than `99583`.
+- **`.shape`**: Returns the number of rows and columns in the filtered dataset.
+
+---
+
+### ✅ **Why It Is Necessary in EDA:**
+
+- This helps identify how many data points have an `Annual Income` greater than a specific threshold (in this case, 99,583).  
+- Useful for understanding the **distribution** and **filtering** of income values above a certain limit. 🚀
+
+
+
+
+
+#for extreme outliers
+lower_bound = (data['Annual Income'].quantile(0.25)) - (IQR * 3)
+upper_bound = (data['Annual Income'].quantile(0.75)) + (IQR * 3)
+print(lower_bound,upper_bound)
+
+### ✅ **Explanation of the Code:**
+
+1. **`lower_bound = (data['Annual Income'].quantile(0.25)) - (IQR * 3)`**  
+   - Calculates the **lower bound** for extreme outliers using the formula: `Q1 - 3 * IQR`.
+
+2. **`upper_bound = (data['Annual Income'].quantile(0.75)) + (IQR * 3)`**  
+   - Calculates the **upper bound** for extreme outliers using the formula: `Q3 + 3 * IQR`.
+
+3. **`print(lower_bound, upper_bound)`**  
+   - Displays the **extreme outlier bounds** for `Annual Income`.
+
+---
+
+### ✅ **Why It Is Necessary in EDA:**
+
+- Identifies **extreme outliers** by expanding the range beyond 1.5 IQR, useful for data cleaning and ensuring the model is not skewed by extreme values. 🚀
+
+
+
+
+
+
+sns.distplot(data['Previous Claims'])
+
+### ✅ **Explanation of `sns.distplot(data['Previous Claims'])`**
+
+- **`sns.distplot()`**: A Seaborn function used to plot the distribution of a numerical feature, combining a **histogram** and **kernel density estimate (KDE)** for visualizing the frequency and smooth probability distribution of the data.
+
+- **`data['Previous Claims']`**: Specifies the `Previous Claims` column to be visualized.
+
+---
+
+### ✅ **Why It Is Necessary in EDA:**
+
+- Helps in understanding the **distribution** of the `Previous Claims` feature, identifying whether it is skewed, and detecting **outliers**.
+- Assists in understanding the **frequency of previous claims** among individuals, which could impact the prediction of insurance premiums. 🚀
+
+
+
+
+
+
+
+sns.boxplot(data['Previous Claims'])
+
+### ✅ **Explanation of `sns.boxplot(data['Previous Claims'])`**
+
+- **`sns.boxplot()`**: This function generates a **boxplot** for visualizing the distribution of the `Previous Claims` data. A boxplot shows the **median, quartiles**, and potential **outliers** in the data.
+  
+- **`data['Previous Claims']`**: Specifies that the boxplot will be generated for the `Previous Claims` feature in the dataset.
+
+---
+
+### ✅ **Why It Is Necessary in EDA:**
+
+- Helps in identifying **outliers** in the `Previous Claims` feature.
+- Shows the **spread** and **central tendency** of claims made, aiding in data cleaning and feature selection. 🚀
+
+
+
+
+
+IQR = data['Previous Claims'].quantile(0.75) - data['Previous Claims'].quantile(0.25)
+lower_bound = (data['Previous Claims'].quantile(0.25)) - (IQR * 1.5)
+upper_bound = (data['Previous Claims'].quantile(0.75)) + (IQR * 1.5)
+print(lower_bound,upper_bound)
+
+
+### ✅ **Explanation of the Code:**
+
+1. **`IQR = data['Previous Claims'].quantile(0.75) - data['Previous Claims'].quantile(0.25)`**  
+   - Calculates the **Interquartile Range (IQR)** by subtracting the 25th percentile (Q1) from the 75th percentile (Q3) of `Previous Claims`.
+
+2. **`lower_bound = (data['Previous Claims'].quantile(0.25)) - (IQR * 1.5)`**  
+   - Calculates the **lower bound** for potential outliers using the formula: `Q1 - 1.5 * IQR`.
+
+3. **`upper_bound = (data['Previous Claims'].quantile(0.75)) + (IQR * 1.5)`**  
+   - Calculates the **upper bound** for potential outliers using the formula: `Q3 + 1.5 * IQR`.
+
+4. **`print(lower_bound, upper_bound)`**  
+   - Prints the **calculated bounds** to identify potential outliers in `Previous Claims`.
+
+---
+
+### ✅ **Why It Is Necessary in EDA:**
+
+- **Outlier detection** is crucial for identifying **extreme values** that might negatively affect model training.  
+- Helps **clean the data**, ensuring more accurate and reliable results. 🚀
+
+
+
+
+
+for col in categorical_features:
+    if col != 'Policy Start Date':
+        data[col].value_counts().plot(kind='pie',autopct="%1.1f%%",figsize=(3,3))
+        plt.title(col)
+        plt.show()
+
+
+### ✅ **Explanation of the Code:**
+
+1. **`for col in categorical_features:`**  
+   - Loops through each categorical feature in the dataset.
+
+2. **`if col != 'Policy Start Date':`**  
+   - Excludes the `Policy Start Date` feature from the pie chart, as it’s likely non-categorical or irrelevant for this analysis.
+
+3. **`data[col].value_counts().plot(kind='pie', autopct="%1.1f%%", figsize=(3,3))`**  
+   - Plots a **pie chart** showing the distribution of values for each categorical feature. The `autopct="%1.1f%%"` displays percentages on the pie chart.
+
+4. **`plt.title(col)`**  
+   - Sets the title of each pie chart to the feature name.
+
+5. **`plt.show()`**  
+   - Displays the pie chart.
+
+---
+
+### ✅ **Why It Is Necessary in EDA:**
+
+- Helps visualize the **distribution** of categories within each categorical feature.  
+- Provides insights into whether the dataset is **balanced** or if certain categories are **overrepresented**.  
+- Useful for feature analysis, especially for preparing the data for modeling. 🚀
+
+
+
+
+
+
+
+
