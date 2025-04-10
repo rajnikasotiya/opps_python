@@ -1,0 +1,7 @@
+MediAssist – Symptom-Based Diagnosis Assistant
+Personal Project | NLP, LLM Integration, Groq
+
+Built a healthcare assistant that analyzes user-input symptoms to suggest potential diseases, relevant medications, and precautionary measures.
+Implemented NLP-based text similarity to match user inputs with known symptom-disease mappings using recursive text chunking for enhanced accuracy.
+Achieved optimal performance with recursive chunking strategies; triggered fallback to an LLM via Groq API when similarity scores fell below a defined threshold.
+Leveraged modern LLM tools to ensure robustness in complex or ambiguous input scenarios.
