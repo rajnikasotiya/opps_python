@@ -1,0 +1,87 @@
+SELECT 
+    member_key,
+    DATE_TRUNC('month', claim_service_date) AS claim_month,
+    MIN(claim_service_date) AS first_claim_date
+FROM 
+    claim
+GROUP BY 
+    member_key, DATE_TRUNC('month', claim_service_date);
+
+
+
+WITH ranked_claims AS (
+    SELECT *,
+           ROW_NUMBER() OVER (PARTITION BY member_key, claim_id, claim_service_date ORDER BY claim_id) AS rn
+    FROM claim
+)
+DELETE FROM claim
+WHERE claim_id IN (
+    SELECT claim_id
+    FROM ranked_claims
+    WHERE rn > 1
+);
+
+
+
+
+from collections import Counter
+
+def analyze_file(file_path):
+    try:
+        with open(file_path, 'r', encoding='utf-8') as file:
+            lines = file.readlines()
+            text = ''.join(lines)
+            words = text.split()
+            
+            print(f"Number of lines: {len(lines)}")
+            print(f"Number of words: {len(words)}")
+            print(f"Number of characters: {len(text)}")
+
+            word_counts = Counter(words)
+            sorted_word_counts = word_counts.most_common()
+            
+            print("\nWord distribution (descending):")
+            for word, count in sorted_word_counts:
+                print(f"{word}: {count}")
+
+    except FileNotFoundError:
+        print("File not found.")
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+# Example usage
+# analyze_file('sample.txt')
+
+
+
+
+from pyspark.sql import SparkSession
+from pyspark.ml.feature import StringIndexer, OneHotEncoder
+from pyspark.ml import Pipeline
+
+# Initialize Spark
+spark = SparkSession.builder.appName("OneHotEncodingExample").getOrCreate()
+
+# Sample data creation
+data = [
+    (1, "A"),
+    (2, "B"),
+    (3, "A"),
+    (4, "C"),
+    (5, "B")
+]
+columns = ["id", "category"]
+
+# Create DataFrame
+df = spark.createDataFrame(data, columns)
+
+# One-hot encoding pipeline
+indexer = StringIndexer(inputCol="category", outputCol="category_index")
+encoder = OneHotEncoder(inputCols=["category_index"], outputCols=["category_vec"])
+
+pipeline = Pipeline(stages=[indexer, encoder])
+model = pipeline.fit(df)
+encoded_df = model.transform(df)
+
+# Show result
+encoded_df.select("id", "category", "category_vec").show()
