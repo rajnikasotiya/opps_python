@@ -1,0 +1,94 @@
+import pandas as pd
+
+# Load the dataset
+df = pd.read_csv('insurance_claims.csv')
+
+# Display the first few rows
+print(df.head())
+
+# Check for missing values
+print(df.isnull().sum())
+
+
+# Summary statistics
+print(df.describe())
+
+# Data types and non-null counts
+print(df.info())
+
+
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+# Count plot for the target variable
+sns.countplot(x='fraud_reported', data=df)
+plt.title('Distribution of Fraud Reported')
+plt.show()
+
+
+# Replace 'NA' strings with actual NaN
+df.replace('?', pd.NA, inplace=True)
+
+# Drop rows with missing target variable
+df.dropna(subset=['fraud_reported'], inplace=True)
+
+# For simplicity, drop rows with any missing values
+df.dropna(inplace=True)
+
+
+# Convert target variable to binary
+df['fraud_reported'] = df['fraud_reported'].map({'Y': 1, 'N': 0})
+
+# Select categorical columns
+categorical_cols = df.select_dtypes(include=['object']).columns
+
+# One-hot encode categorical variables
+df_encoded = pd.get_dummies(df, columns=categorical_cols, drop_first=True)
+
+
+
+from sklearn.model_selection import train_test_split
+
+# Separate features and target
+X = df_encoded.drop('fraud_reported', axis=1)
+y = df_encoded['fraud_reported']
+
+# Split into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+
+
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.metrics import accuracy_score, f1_score
+
+# Initialize and train the model
+dt_model = DecisionTreeClassifier(random_state=42)
+dt_model.fit(X_train, y_train)
+
+# Predictions
+y_pred_dt = dt_model.predict(X_test)
+
+# Evaluation
+accuracy_dt = accuracy_score(y_test, y_pred_dt)
+f1_dt = f1_score(y_test, y_pred_dt)
+
+print(f'Decision Tree Accuracy: {accuracy_dt:.2f}')
+print(f'Decision Tree F1 Score: {f1_dt:.2f}')
+
+
+
+from sklearn.ensemble import RandomForestClassifier
+
+# Initialize and train the model
+rf_model = RandomForestClassifier(random_state=42)
+rf_model.fit(X_train, y_train)
+
+# Predictions
+y_pred_rf = rf_model.predict(X_test)
+
+# Evaluation
+accuracy_rf = accuracy_score(y_test, y_pred_rf)
+f1_rf = f1_score(y_test, y_pred_rf)
+
+print(f'Random Forest Accuracy: {accuracy_rf:.2f}')
+print(f'Random Forest F1 Score: {f1_rf:.2f}')
