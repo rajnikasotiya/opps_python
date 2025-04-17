@@ -1,0 +1,81 @@
+pip install scikit-learn xgboost matplotlib seaborn
+
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import GradientBoostingClassifier, AdaBoostClassifier
+from xgboost import XGBClassifier
+from sklearn.metrics import accuracy_score, confusion_matrix, ConfusionMatrixDisplay
+
+# Load your dataset here
+# df = pd.read_csv('claims.csv')
+# X = df.drop("target", axis=1)
+# y = df["target"]
+
+# Example placeholder (replace with your data)
+from sklearn.datasets import make_classification
+X, y = make_classification(n_samples=1000, n_features=20, random_state=42)
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+
+
+models = {
+    "GradientBoosting": GradientBoostingClassifier(random_state=42),
+    "XGBoost": XGBClassifier(use_label_encoder=False, eval_metric='logloss', random_state=42)
+}
+
+for name, model in models.items():
+    model.fit(X_train, y_train)
+    y_pred = model.predict(X_test)
+    
+    acc = accuracy_score(y_test, y_pred)
+    cm = confusion_matrix(y_test, y_pred)
+    
+    print(f"\n{name} Accuracy: {acc:.4f}")
+    ConfusionMatrixDisplay(confusion_matrix=cm).plot()
+    plt.title(f"{name} - Confusion Matrix")
+    plt.show()
+
+    # Feature Importance Plot
+    importances = model.feature_importances_
+    feat_names = [f"Feature {i}" for i in range(X.shape[1])]
+    sns.barplot(x=importances, y=feat_names)
+    plt.title(f"{name} - Feature Importances")
+    plt.tight_layout()
+    plt.show()
+
+
+
+n_estimators_range = [10, 50, 100, 200]
+learning_rate_range = [0.1, 0.5, 1.0]
+
+results = []
+
+for n in n_estimators_range:
+    for lr in learning_rate_range:
+        model = AdaBoostClassifier(n_estimators=n, learning_rate=lr, random_state=42)
+        model.fit(X_train, y_train)
+        acc = model.score(X_test, y_test)
+        results.append({'n_estimators': n, 'learning_rate': lr, 'accuracy': acc})
+
+# Convert results to DataFrame
+results_df = pd.DataFrame(results)
+
+# Plot
+plt.figure(figsize=(10, 6))
+for lr in learning_rate_range:
+    subset = results_df[results_df.learning_rate == lr]
+    plt.plot(subset['n_estimators'], subset['accuracy'], marker='o', label=f'lr={lr}')
+    
+plt.title('AdaBoost Accuracy for different n_estimators and learning_rate')
+plt.xlabel('n_estimators')
+plt.ylabel('Accuracy')
+plt.legend()
+plt.grid(True)
+plt.tight_layout()
+plt.show()
