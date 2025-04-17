@@ -50,3 +50,146 @@ clf.fit(X_train, y_train)
 y_pred = clf.predict(X_test)
 print("Accuracy:", accuracy_score(y_test, y_pred))
 print("F1 Score:", f1_score(y_test, y_pred))
+
+
+
+
+####EDA####
+# Basic structure
+print(df.info())
+
+# Summary statistics for numeric columns
+print(df.describe())
+
+# Check for missing values
+print(df.isnull().sum())
+
+
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+# Count plot for target variable
+sns.countplot(x='made_claim', data=df)
+plt.title("Claim Distribution")
+plt.xlabel("Made Claim")
+plt.ylabel("Count")
+plt.show()
+
+
+# Age Distribution
+sns.histplot(df['age'], kde=True, bins=30)
+plt.title("Age Distribution")
+plt.show()
+
+# Income Distribution
+sns.histplot(df['annual_income'], kde=True, bins=30)
+plt.title("Annual Income Distribution")
+plt.show()
+
+
+# Vehicle Age
+sns.countplot(x='vehicle_age', data=df)
+plt.title("Vehicle Age Distribution")
+plt.show()
+
+# Vehicle Damage
+sns.countplot(x='vehicle_damage', data=df)
+plt.title("Vehicle Damage Distribution")
+plt.show()
+
+# Previously Insured
+sns.countplot(x='previously_insured', data=df)
+plt.title("Previously Insured Distribution")
+plt.show()
+
+# Policy Sales Channel
+sns.countplot(x='policy_sales_channel', data=df)
+plt.title("Policy Sales Channel Distribution")
+plt.show()
+
+
+sns.boxplot(x='made_claim', y='age', data=df)
+plt.title("Age vs Claim")
+plt.show()
+
+
+sns.boxplot(x='made_claim', y='annual_income', data=df)
+plt.title("Annual Income vs Claim")
+plt.show()
+
+
+# Cross-tab for vehicle damage and claim
+print(pd.crosstab(df['vehicle_damage'], df['made_claim'], normalize='index'))
+
+# Heatmap of the same
+sns.heatmap(pd.crosstab(df['vehicle_damage'], df['made_claim'], normalize='index'), annot=True, cmap='Blues')
+plt.title("Vehicle Damage vs Claim Probability")
+plt.show()
+
+
+df_encoded = pd.get_dummies(df, drop_first=True)
+
+# Correlation matrix
+plt.figure(figsize=(10, 6))
+sns.heatmap(df_encoded.corr(), annot=True, fmt=".2f", cmap='coolwarm')
+plt.title("Correlation Heatmap")
+plt.show()
+
+
+
+
+# One-hot encode categorical features
+df_encoded = pd.get_dummies(df, columns=['vehicle_age', 'policy_sales_channel'], drop_first=True)
+
+# Features and target
+X = df_encoded.drop('made_claim', axis=1)
+y = df_encoded['made_claim']
+
+# Train-test split
+from sklearn.model_selection import train_test_split
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42)
+
+
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.metrics import accuracy_score, f1_score, classification_report
+
+# Initialize and train the model
+dt_model = DecisionTreeClassifier(random_state=42)
+dt_model.fit(X_train, y_train)
+
+# Predict
+y_pred_dt = dt_model.predict(X_test)
+
+# Evaluate
+print("Decision Tree Classifier Results:")
+print("Accuracy:", accuracy_score(y_test, y_pred_dt))
+print("F1 Score:", f1_score(y_test, y_pred_dt))
+print(classification_report(y_test, y_pred_dt))
+
+
+
+from sklearn.ensemble import RandomForestClassifier
+
+# Initialize and train the model
+rf_model = RandomForestClassifier(random_state=42)
+rf_model.fit(X_train, y_train)
+
+# Predict
+y_pred_rf = rf_model.predict(X_test)
+
+# Evaluate
+print("Random Forest Classifier Results:")
+print("Accuracy:", accuracy_score(y_test, y_pred_rf))
+print("F1 Score:", f1_score(y_test, y_pred_rf))
+print(classification_report(y_test, y_pred_rf))
+
+
+
+import matplotlib.pyplot as plt
+
+# Feature importances from Random Forest
+feature_importances = pd.Series(rf_model.feature_importances_, index=X.columns)
+feature_importances.sort_values(ascending=False).plot(kind='bar', figsize=(10, 5))
+plt.title("Feature Importances (Random Forest)")
+plt.show()
