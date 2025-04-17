@@ -1,0 +1,52 @@
+import pandas as pd
+import numpy as np
+
+# For reproducibility
+np.random.seed(42)
+
+# Number of samples
+n = 1000
+
+# Generate dummy features
+df = pd.DataFrame({
+    'age': np.random.randint(20, 70, size=n),
+    'annual_income': np.random.normal(50000, 15000, size=n).astype(int),
+    'vehicle_age': np.random.choice(['<1 year', '1-2 years', '>2 years'], size=n),
+    'vehicle_damage': np.random.choice([0, 1], size=n),
+    'previously_insured': np.random.choice([0, 1], size=n),
+    'policy_sales_channel': np.random.choice(['online', 'agent', 'call_center'], size=n)
+})
+
+# Generate target variable with some rule-based logic
+df['made_claim'] = ((df['vehicle_damage'] == 1) & (df['previously_insured'] == 0)).astype(int)
+
+# Show sample data
+print(df.head())
+
+# One-hot encoding for categorical variables
+df_encoded = pd.get_dummies(df, columns=['vehicle_age', 'policy_sales_channel'], drop_first=True)
+
+# Separate features and target
+X = df_encoded.drop('made_claim', axis=1)
+y = df_encoded['made_claim']
+
+# Train-test split
+from sklearn.model_selection import train_test_split
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42)
+
+print("Training set size:", X_train.shape)
+print("Test set size:", X_test.shape)
+
+
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score, f1_score
+
+# Train model
+clf = RandomForestClassifier(random_state=42)
+clf.fit(X_train, y_train)
+
+# Predict and evaluate
+y_pred = clf.predict(X_test)
+print("Accuracy:", accuracy_score(y_test, y_pred))
+print("F1 Score:", f1_score(y_test, y_pred))
