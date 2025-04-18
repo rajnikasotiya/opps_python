@@ -1,0 +1,112 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import OneHotEncoder
+from sklearn.compose import ColumnTransformer
+from sklearn.metrics import accuracy_score, confusion_matrix, ConfusionMatrixDisplay
+from sklearn.ensemble import GradientBoostingClassifier, AdaBoostClassifier
+from xgboost import XGBClassifier
+
+# --- Load Data ---
+df = pd.read_csv("claims.csv")
+
+# --- Extract date parts from claim_date ---
+df["claim_date"] = pd.to_datetime(df["claim_date"])
+df["claim_day"] = df["claim_date"].dt.day
+df["claim_month"] = df["claim_date"].dt.month
+df["claim_dayofweek"] = df["claim_date"].dt.dayofweek
+df.drop(columns=["claim_date"], inplace=True)
+
+# --- Define Features and Target ---
+target = "is_duplicate"
+X = df.drop(columns=[target])
+y = df[target]
+
+# Categorical Features to Encode
+categorical_cols = ["hlth_srvc_cd", "provider_id"]
+numerical_cols = [col for col in X.columns if col not in categorical_cols]
+
+# --- OneHot Encode categorical features ---
+preprocessor = ColumnTransformer(
+    transformers=[
+        ("cat", OneHotEncoder(handle_unknown="ignore"), categorical_cols)
+    ],
+    remainder="passthrough"
+)
+
+# Encode features
+X_encoded = preprocessor.fit_transform(X)
+feature_names = preprocessor.named_transformers_["cat"].get_feature_names_out(categorical_cols).tolist()
+feature_names += numerical_cols
+
+# --- Train/Test Split ---
+X_train, X_test, y_train, y_test = train_test_split(
+    X_encoded, y, test_size=0.2, random_state=42
+)
+
+
+
+
+
+models = {
+    "GradientBoosting": GradientBoostingClassifier(random_state=42),
+    "XGBoost": XGBClassifier(use_label_encoder=False, eval_metric="logloss", random_state=42)
+}
+
+for name, model in models.items():
+    print(f"\n=== {name} ===")
+    model.fit(X_train, y_train)
+    y_pred = model.predict(X_test)
+
+    # Accuracy & Confusion Matrix
+    acc = accuracy_score(y_test, y_pred)
+    print(f"Accuracy: {acc:.4f}")
+    ConfusionMatrixDisplay.from_predictions(y_test, y_pred)
+    plt.title(f"{name} - Confusion Matrix")
+    plt.show()
+
+    # Feature Importances
+    importances = model.feature_importances_
+    sorted_idx = np.argsort(importances)[::-1][:20]
+
+    plt.figure(figsize=(12, 6))
+    sns.barplot(x=importances[sorted_idx], y=np.array(feature_names)[sorted_idx])
+    plt.title(f"{name} - Top 20 Feature Importances")
+    plt.tight_layout()
+    plt.show()
+
+
+
+
+
+
+
+n_estimators_list = [10, 50, 100, 200]
+learning_rates = [0.1, 0.5, 1.0]
+results = []
+
+for n in n_estimators_list:
+    for lr in learning_rates:
+        model = AdaBoostClassifier(n_estimators=n, learning_rate=lr, random_state=42)
+        model.fit(X_train, y_train)
+        acc = model.score(X_test, y_test)
+        results.append({'n_estimators': n, 'learning_rate': lr, 'accuracy': acc})
+
+results_df = pd.DataFrame(results)
+
+# Plotting accuracy trends
+plt.figure(figsize=(10, 6))
+for lr in learning_rates:
+    subset = results_df[results_df.learning_rate == lr]
+    plt.plot(subset["n_estimators"], subset["accuracy"], marker='o', label=f"lr={lr}")
+
+plt.title("AdaBoost Accuracy vs. n_estimators")
+plt.xlabel("n_estimators")
+plt.ylabel("Accuracy")
+plt.legend()
+plt.grid(True)
+plt.tight_layout()
+plt.show()
