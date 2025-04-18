@@ -1,0 +1,25 @@
+import numpy as np
+
+def binary_entropy(pos, neg):
+    total = pos + neg
+    if total == 0:
+        return 0  # Avoid division by zero
+
+    p_pos = pos / total
+    p_neg = neg / total
+
+    entropy = 0
+    if p_pos > 0:
+        entropy -= p_pos * np.log2(p_pos)
+    if p_neg > 0:
+        entropy -= p_neg * np.log2(p_neg)
+
+    return entropy
+
+
+# Suppose you have 9 positive and 5 negative samples
+pos = 9
+neg = 5
+
+entropy_val = binary_entropy(pos, neg)
+print(f"Entropy: {entropy_val:.4f}")
