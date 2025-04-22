@@ -1,0 +1,93 @@
+# quantile_regression_outlier_detection.py
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split, GridSearchCV
+import lightgbm as lgb
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Load dataset
+df = pd.read_csv("claim_data.csv")
+
+# Convert claim_date to datetime for possible future use
+df['claim_date'] = pd.to_datetime(df['claim_date'])
+
+# Remove categorical features
+categorical_cols = ['hlth_srvc_cd', 'provider_id', 'claim_date']
+df = df.drop(columns=categorical_cols)
+
+# Define features and target
+features = ['rev_cd', 'pos_cd', 'days_between_claims']
+target = 'bill_amt'
+X = df[features]
+y = df[target]
+
+# Train-test split
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Hyperparameter tuning for LightGBM 50th quantile
+params = {
+    'n_estimators': [50, 100, 200],
+    'learning_rate': [0.01, 0.05, 0.1],
+    'max_depth': [3, 5, 7]
+}
+model_50 = lgb.LGBMRegressor(objective='quantile', alpha=0.5, random_state=42)
+gs_50 = GridSearchCV(model_50, params, cv=3, scoring='neg_mean_absolute_error')
+gs_50.fit(X_train, y_train)
+model_50_best = gs_50.best_estimator_
+
+# Hyperparameter tuning for LightGBM 90th quantile
+model_90 = lgb.LGBMRegressor(objective='quantile', alpha=0.9, random_state=42)
+gs_90 = GridSearchCV(model_90, params, cv=3, scoring='neg_mean_absolute_error')
+gs_90.fit(X_train, y_train)
+model_90_best = gs_90.best_estimator_
+
+# Predict quantiles
+q50_preds = model_50_best.predict(X_test)
+q90_preds = model_90_best.predict(X_test)
+
+# Flag anomalies (actual > predicted quantile)
+anomalies_50 = y_test > q50_preds
+anomalies_90 = y_test > q90_preds
+
+# Combine results for comparison
+results = X_test.copy()
+results['actual'] = y_test
+results['q50_pred'] = q50_preds
+results['q90_pred'] = q90_preds
+results['outlier_50'] = anomalies_50
+results['outlier_90'] = anomalies_90
+
+# Compare outliers vs non-outliers (90th)
+print("\nSummary of 90th Quantile Outliers vs Non-Outliers:")
+print(results.groupby('outlier_90')[features + ['actual']].mean())
+
+# Compare outliers vs non-outliers (50th)
+print("\nSummary of 50th Quantile Outliers vs Non-Outliers:")
+print(results.groupby('outlier_50')[features + ['actual']].mean())
+
+# Visualization of 90th quantile
+plt.figure(figsize=(10, 6))
+sns.scatterplot(x=results['q90_pred'], y=results['actual'], hue=results['outlier_90'])
+plt.axline((0, 0), slope=1, color='gray', linestyle='--')
+plt.title('Actual vs 90th Quantile Prediction')
+plt.xlabel('Predicted (90th Quantile)')
+plt.ylabel('Actual Bill Amount')
+plt.legend(title='Outlier (90th)')
+plt.grid(True)
+plt.show()
+
+# Visualization of 50th quantile
+plt.figure(figsize=(10, 6))
+sns.scatterplot(x=results['q50_pred'], y=results['actual'], hue=results['outlier_50'])
+plt.axline((0, 0), slope=1, color='gray', linestyle='--')
+plt.title('Actual vs 50th Quantile Prediction')
+plt.xlabel('Predicted (50th Quantile)')
+plt.ylabel('Actual Bill Amount')
+plt.legend(title='Outlier (50th)')
+plt.grid(True)
+plt.show()
+
+# Display best parameters
+print("\nBest parameters for 50th quantile:", gs_50.best_params_)
+print("Best parameters for 90th quantile:", gs_90.best_params_)
