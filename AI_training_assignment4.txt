@@ -1,0 +1,72 @@
+import pandas as pd
+import numpy as np
+from sklearn.preprocessing import StandardScaler, LabelEncoder
+from sklearn.cluster import KMeans, AgglomerativeClustering
+from sklearn.metrics import silhouette_score
+import matplotlib.pyplot as plt
+import seaborn as sns
+from scipy.cluster.hierarchy import dendrogram, linkage
+
+# Load your dataset
+df = pd.read_csv("claims_dataset.csv")
+
+# Step 1: Preserve important IDs separately
+id_cols = df[['claim_id', 'member_id', 'provider_id']]
+
+# Step 2: Encode categorical features
+df_encoded = df.copy()
+df_encoded['hlth_srvc_cd'] = LabelEncoder().fit_transform(df_encoded['hlth_srvc_cd'])
+df_encoded['provider_id'] = LabelEncoder().fit_transform(df_encoded['provider_id'])
+
+# Convert claim_date to datetime and extract features
+df_encoded['claim_date'] = pd.to_datetime(df_encoded['claim_date'])
+df_encoded['claim_day'] = df_encoded['claim_date'].dt.day
+df_encoded['claim_month'] = df_encoded['claim_date'].dt.month
+df_encoded.drop(['claim_date', 'claim_id', 'member_id'], axis=1, inplace=True)  # keep IDs safe
+
+# Step 3: Scale the data
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(df_encoded)
+
+# Step 4: Find optimal K using Elbow Method
+inertia = []
+K_range = range(2, 10)
+for k in K_range:
+    km = KMeans(n_clusters=k, random_state=42)
+    km.fit(X_scaled)
+    inertia.append(km.inertia_)
+
+plt.figure(figsize=(6,4))
+plt.plot(K_range, inertia, marker='o')
+plt.title("Elbow Method for Optimal K")
+plt.xlabel("Number of clusters")
+plt.ylabel("Inertia")
+plt.show()
+
+# Optional: Silhouette Score
+for k in K_range:
+    km = KMeans(n_clusters=k, random_state=42)
+    labels = km.fit_predict(X_scaled)
+    score = silhouette_score(X_scaled, labels)
+    print(f"K={k} Silhouette Score: {score:.3f}")
+
+# Step 5: KMeans Clustering
+kmeans = KMeans(n_clusters=3, random_state=42)
+df_encoded['kmeans_cluster'] = kmeans.fit_predict(X_scaled)
+
+# Step 6: Hierarchical Clustering + Dendrogram
+plt.figure(figsize=(8, 5))
+Z = linkage(X_scaled, method='ward')
+dendrogram(Z, truncate_mode='level', p=5)
+plt.title("Hierarchical Clustering Dendrogram")
+plt.xlabel("Sample Index")
+plt.ylabel("Distance")
+plt.show()
+
+# Agglomerative Clustering
+agg = AgglomerativeClustering(n_clusters=3)
+df_encoded['agg_cluster'] = agg.fit_predict(X_scaled)
+
+# Step 7: Interpretation
+df_clusters = pd.concat([id_cols, df_encoded], axis=1)
+print(df_clusters.groupby('kmeans_cluster').mean(numeric_only=True))
