@@ -1,1 +1,91 @@
 
+# clustering_pca_claims.py
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+from sklearn.preprocessing import StandardScaler, LabelEncoder
+from sklearn.decomposition import PCA
+from sklearn.cluster import KMeans, AgglomerativeClustering
+from sklearn.metrics import silhouette_score
+
+# Load dataset (replace with your file path)
+df = pd.read_csv("your_claims_data.csv")
+
+# Encode categorical features
+label_enc = LabelEncoder()
+df['hlth_srvc_cd'] = label_enc.fit_transform(df['hlth_srvc_cd'])
+df['provider_id'] = label_enc.fit_transform(df['provider_id'])
+df['claim_date'] = pd.to_datetime(df['claim_date']).astype(int) / 10**9  # Unix timestamp
+
+# Select relevant features
+features = ['hlth_srvc_cd', 'rev_cd', 'bill_amt', 'provider_id',
+            'pos_cd', 'days_between_claims']
+X = df[features]
+
+# Scale features
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+
+# PCA for visualization
+pca = PCA(n_components=2)
+X_pca = pca.fit_transform(X_scaled)
+
+plt.figure(figsize=(8, 6))
+plt.scatter(X_pca[:, 0], X_pca[:, 1], s=30, alpha=0.6)
+plt.title('PCA Projection of Claims Data')
+plt.xlabel('PCA 1')
+plt.ylabel('PCA 2')
+plt.grid(True)
+plt.show()
+
+# Find optimal K for KMeans
+sil_scores = []
+K_range = range(2, 10)
+
+for k in K_range:
+    kmeans = KMeans(n_clusters=k, random_state=42)
+    kmeans.fit(X_scaled)
+    sil_scores.append(silhouette_score(X_scaled, kmeans.labels_))
+
+plt.plot(K_range, sil_scores, marker='o')
+plt.title("Silhouette Score vs K (K-Means)")
+plt.xlabel("Number of Clusters (K)")
+plt.ylabel("Silhouette Score")
+plt.grid(True)
+plt.show()
+
+# Fit KMeans with optimal K
+optimal_k = K_range[sil_scores.index(max(sil_scores))]
+kmeans = KMeans(n_clusters=optimal_k, random_state=42)
+kmeans_labels = kmeans.fit_predict(X_scaled)
+
+# Hierarchical clustering
+agg = AgglomerativeClustering(n_clusters=optimal_k)
+agg_labels = agg.fit_predict(X_scaled)
+
+# Plot function
+def plot_clusters(X_pca, labels, title):
+    plt.figure(figsize=(8, 6))
+    sns.scatterplot(x=X_pca[:, 0], y=X_pca[:, 1], hue=labels, palette='Set2', s=50)
+    plt.title(title)
+    plt.xlabel('PCA 1')
+    plt.ylabel('PCA 2')
+    plt.legend(title='Cluster')
+    plt.grid(True)
+    plt.show()
+
+plot_clusters(X_pca, kmeans_labels, 'K-Means Clusters (PCA View)')
+plot_clusters(X_pca, agg_labels, 'Hierarchical Clusters (PCA View)')
+
+# Attach cluster labels to dataframe
+df['kmeans_cluster'] = kmeans_labels
+df['agg_cluster'] = agg_labels
+
+# Summary statistics per cluster
+print("\nK-Means Cluster Summary:")
+print(df.groupby('kmeans_cluster')[features].mean())
+
+print("\nAgglomerative Cluster Summary:")
+print(df.groupby('agg_cluster')[features].mean())
