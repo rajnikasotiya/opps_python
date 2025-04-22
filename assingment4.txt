@@ -8,6 +8,7 @@ from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.decomposition import PCA
 from sklearn.cluster import KMeans, AgglomerativeClustering
 from sklearn.metrics import silhouette_score
+from scipy.cluster.hierarchy import dendrogram, linkage
 
 # Load dataset (replace with your file path)
 df = pd.read_csv("your_claims_data.csv")
@@ -48,6 +49,7 @@ for k in K_range:
     kmeans.fit(X_scaled)
     inertia.append(kmeans.inertia_)
 
+plt.figure(figsize=(8, 5))
 plt.plot(K_range, inertia, marker='o')
 plt.title("Elbow Method for Optimal K")
 plt.xlabel("Number of Clusters (K)")
@@ -64,6 +66,7 @@ for k in K_range_sil:
     kmeans.fit(X_scaled)
     sil_scores.append(silhouette_score(X_scaled, kmeans.labels_))
 
+plt.figure(figsize=(8, 5))
 plt.plot(K_range_sil, sil_scores, marker='o')
 plt.title("Silhouette Score vs K (K-Means)")
 plt.xlabel("Number of Clusters (K)")
@@ -79,6 +82,16 @@ kmeans_labels = kmeans.fit_predict(X_scaled)
 # Hierarchical clustering with same optimal_k
 agg = AgglomerativeClustering(n_clusters=optimal_k)
 agg_labels = agg.fit_predict(X_scaled)
+
+# Plot dendrogram for hierarchical clustering
+plt.figure(figsize=(10, 6))
+linkage_matrix = linkage(X_scaled, method='ward')
+dendrogram(linkage_matrix)
+plt.title('Dendrogram for Hierarchical Clustering')
+plt.xlabel('Samples')
+plt.ylabel('Distance')
+plt.grid(True)
+plt.show()
 
 # Plot function
 def plot_clusters(X_pca, labels, title):
