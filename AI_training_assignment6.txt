@@ -1,0 +1,91 @@
+# model_selection_comparison.py
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split, cross_val_score, GridSearchCV, RandomizedSearchCV
+from sklearn.metrics import f1_score, make_scorer
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.svm import SVC
+from sklearn.preprocessing import LabelEncoder, StandardScaler
+import time
+from skopt import BayesSearchCV
+
+# Load dataset
+df = pd.read_csv("insurance.csv")
+
+# Encode categorical features
+categorical_cols = ['sex', 'smoker', 'region']
+le = LabelEncoder()
+for col in categorical_cols:
+    df[col] = le.fit_transform(df[col])
+
+# Define features and target
+X = df.drop(columns=["Target"])
+y = df["Target"]
+
+# Standardize features
+scaler = StandardScaler()
+X = scaler.fit_transform(X)
+
+# Split data
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Define models
+models = {
+    "LogisticRegression": LogisticRegression(max_iter=1000),
+    "RandomForest": RandomForestClassifier(),
+    "SVM": SVC()
+}
+
+# Define param grids
+grid_params = {
+    "LogisticRegression": {
+        'C': [0.01, 0.1, 1, 10]
+    },
+    "RandomForest": {
+        'n_estimators': [50, 100, 200],
+        'max_depth': [3, 5, 10]
+    },
+    "SVM": {
+        'C': [0.1, 1, 10],
+        'kernel': ['linear', 'rbf']
+    }
+}
+
+# Custom F1 scorer
+f1 = make_scorer(f1_score)
+
+# Grid Search, Random Search, and Bayesian Optimization
+results = []
+
+for name, model in models.items():
+    print(f"\nEvaluating {name}...")
+    
+    # Grid Search
+    start = time.time()
+    grid = GridSearchCV(model, grid_params[name], scoring=f1, cv=5)
+    grid.fit(X_train, y_train)
+    end = time.time()
+    f1_grid = f1_score(y_test, grid.predict(X_test))
+    results.append((name, "GridSearch", f1_grid, end - start))
+
+    # Random Search
+    start = time.time()
+    random = RandomizedSearchCV(model, grid_params[name], scoring=f1, cv=5, n_iter=5, random_state=42)
+    random.fit(X_train, y_train)
+    end = time.time()
+    f1_random = f1_score(y_test, random.predict(X_test))
+    results.append((name, "RandomSearch", f1_random, end - start))
+
+    # Bayesian Optimization
+    start = time.time()
+    bayes = BayesSearchCV(model, grid_params[name], scoring=f1, cv=5, n_iter=10, random_state=42)
+    bayes.fit(X_train, y_train)
+    end = time.time()
+    f1_bayes = f1_score(y_test, bayes.predict(X_test))
+    results.append((name, "BayesOpt", f1_bayes, end - start))
+
+# Results DataFrame
+results_df = pd.DataFrame(results, columns=["Model", "SearchMethod", "F1Score", "Time"])
+print("\nComparison of Model Selection Methods:")
+print(results_df.sort_values(by=["Model", "F1Score"], ascending=[True, False]))
